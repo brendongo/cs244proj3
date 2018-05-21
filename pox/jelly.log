@@ -1,0 +1,5 @@
+INFO:core:POX 0.2.0 (carp) is up.
+INFO:openflow.of_01:[00-00-00-00-00-04 1] connected
+INFO:jelly_controller:<pox.ext.jelly_controller.Tutorial object at 0x7f82db0aecd0>
+INFO:openflow.of_01:[00-00-00-00-00-03 2] connected
+INFO:jelly_controller:<pox.ext.jelly_controller.Tutorial object at 0x7f82db0aec90>
