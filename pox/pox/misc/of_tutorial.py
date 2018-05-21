@@ -68,6 +68,7 @@ class Tutorial (object):
     Implement hub-like behavior -- send all packets to all ports besides
     the input port.
     """
+
     # We want to output to all ports -- we do that using the special
     # OFPP_ALL port as the output port.  (We could have also used
     # OFPP_FLOOD.)
@@ -133,9 +134,6 @@ class Tutorial (object):
 
     # Comment out the following line and uncomment the one after
     # when starting the exercise.
-    print "Src: " + str(packet.src)
-    print "Dest: " + str(packet.dst)
-    print "Event port: " + str(event.port)
     self.act_like_hub(packet, packet_in)
     #self.act_like_switch(packet, packet_in)
 

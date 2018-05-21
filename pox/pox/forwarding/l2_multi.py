@@ -223,7 +223,6 @@ class PathInstalled (Event):
   Fired when a path is installed
   """
   def __init__ (self, path):
-    Event.__init__(self)
     self.path = path
 
 
@@ -246,8 +245,6 @@ class Switch (EventMixin):
     msg.hard_timeout = FLOW_HARD_TIMEOUT
     msg.actions.append(of.ofp_action_output(port = out_port))
     msg.buffer_id = buf
-    if switch.connection == None:
-	print "in install, switch dpid = ", switch.dpid 
     switch.connection.send(msg)
 
   def _install_path (self, p, match, packet_in=None):
@@ -334,7 +331,7 @@ class Switch (EventMixin):
         event.ofp.buffer_id = None # Mark is dead
         msg.in_port = event.port
         self.connection.send(msg)
-	
+
     packet = event.parsed
 
     loc = (self, event.port) # Place we saw this ethaddr
@@ -423,13 +420,10 @@ class l2_multi (EventMixin):
   ])
 
   def __init__ (self):
-    # Listen to dependencies
-    def startup ():
-      core.openflow.addListeners(self, priority=0)
-      core.openflow_discovery.addListeners(self)
-    core.call_when_ready(startup, ('openflow','openflow_discovery'))
+    # Listen to dependencies (specifying priority 0 for openflow)
+    core.listen_to_dependencies(self, listen_args={'openflow':{'priority':0}})
 
-  def _handle_LinkEvent (self, event):
+  def _handle_openflow_discovery_LinkEvent (self, event):
     def flip (link):
       return Discovery.Link(link[2],link[3], link[0],link[1])
 
@@ -485,19 +479,17 @@ class l2_multi (EventMixin):
         log.debug("Unlearned %s", mac)
         del mac_map[mac]
 
-  def _handle_ConnectionUp (self, event):
+  def _handle_openflow_ConnectionUp (self, event):
     sw = switches.get(event.dpid)
     if sw is None:
       # New switch
       sw = Switch()
       switches[event.dpid] = sw
       sw.connect(event.connection)
-      print "Connecting if, dpid= ", event.dpid
     else:
-      print "Connecting else, dpid = ", event.dpid
       sw.connect(event.connection)
 
-  def _handle_BarrierIn (self, event):
+  def _handle_openflow_BarrierIn (self, event):
     wp = waiting_paths.pop((event.dpid,event.xid), None)
     if not wp:
       #log.info("No waiting packet %s,%s", event.dpid, event.xid)
@@ -506,7 +498,7 @@ class l2_multi (EventMixin):
     wp.notify(event)
 
 
-def launch (): 
+def launch ():
   core.registerNew(l2_multi)
 
   timeout = min(max(PATH_SETUP_TIME, 5) * 2, 15)

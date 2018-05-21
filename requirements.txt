@@ -1,0 +1,22 @@
+astroid==1.4.4
+boto==2.38.0
+chardet==2.3.0
+crcmod==1.7
+decorator==4.3.0
+google-compute-engine==2.7.5
+lazy-object-proxy==1.2.1
+logilab-common==1.1.0
+networkx==2.1
+numpy==1.14.3
+pexpect==4.0.1
+ptyprocess==0.5
+pyflakes==1.1.0
+pylint==1.5.2
+requests==2.9.1
+-e git+https://github.com/brendongo/cs244proj2@1ee00c1acd3fe072a1c56044e331647cc2d6e13a#egg=ripl&subdirectory=ripl
+-e git+https://github.com/brendongo/cs244proj2@1ee00c1acd3fe072a1c56044e331647cc2d6e13a#egg=riplpox&subdirectory=riplpox
+scapy==2.2.0
+six==1.10.0
+tqdm==4.23.2
+urllib3==1.13.1
+wrapt==1.8.0
