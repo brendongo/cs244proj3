@@ -1,0 +1,65 @@
+\documentclass{article}
+\usepackage{graphicx,fancyhdr,amsmath,amssymb,amsthm,subfig,url,hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumerate}
+\input{"/Users/Evan/Documents/TexPreamble/preamble"}
+
+%----------------------- Macros and Definitions --------------------------
+
+%%% FILL THIS OUT
+\newcommand{\studentname}{Evan Liu}
+\newcommand{\suid}{evanliu}
+\newcommand{\exerciseset}{Exercise \#1}
+%%% END
+
+
+
+\renewcommand{\theenumi}{\bf \Alph{enumi}}
+
+%\theoremstyle{plain}
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{lemma}[theorem]{Lemma}
+
+\fancypagestyle{plain}{}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[RO,LE]{\sffamily\bfseries\large Stanford University}
+\fancyhead[LO,RE]{\sffamily\bfseries\large CS 261 Optimization and Algorithmic Paradigms}
+\fancyfoot[LO,RE]{\sffamily\bfseries\large \studentname: \suid @stanford.edu}
+\fancyfoot[RO,LE]{\sffamily\bfseries\thepage}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{1pt}
+
+\graphicspath{{figures/}}
+
+%-------------------------------- Title ----------------------------------
+
+\title{CS261 \exerciseset}
+\author{\studentname \qquad SUNet ID: \suid}
+
+%--------------------------------- Text ----------------------------------
+
+\begin{document}
+\maketitle
+
+\begin{equation*}
+  \begin{aligned}
+  & \underset{K, f}{\text{maximize}}
+  & & K \\
+  & \text{subject to}
+  & & f_{(s, e), (u, v)} \geq 0 \text{ for each flow } f_{(s, e)} \text{ and
+  each link } (u, v)\\
+  &&& \sum_{v \in from(s)} f_{(s, e), (s, v)} \geq K \text{ for
+  each flow } f_{(s, e)} \\
+  &&& \sum_{v \in to(e)} f_{(s, e), (v, e)} \geq K \text{ for each flow }
+  f_{(s, e)} \\
+  &&& \sum_{v \in from(u)} f_{(s, e), (u, v)} = \sum_{w \in to(u)}
+  f_{(s, e), (w, u)} \text{ for each flow } f_{(s, e)},
+  \text{ and switch } u \neq s, e \\
+  &&& \sum_{f_{(s, e)}} f_{(s, e), (u, v)} \leq 1 \text{ for each link } (u, v)
+  \end{aligned}
+\end{equation*}
+
+\end{document}
+
+
