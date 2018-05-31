@@ -7,7 +7,7 @@ from tqdm import tqdm
 from util import aspl_lower_bound
 
 def total_flows(traffic):
-    return sum([1 for src in traffic for dst in traffic[src] if src != dst])
+    return sum([len(traffic[src]) for src in traffic])
 
 
 def generate_lp(graph, N, degree, traffic):
@@ -107,7 +107,7 @@ def generate_lp(graph, N, degree, traffic):
                     flow_var[flow_ids[flow], link_ids[link]] >= 0)
 
     prob = Problem(objective, constraints)
-    result = prob.solve()
+    result = prob.solve(solver=cvx.CBC)
     return result
 
 
