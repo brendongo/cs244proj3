@@ -7,6 +7,7 @@ from ripl.ripl.graph import Graph
 from tqdm import tqdm
 from util import aspl_lower_bound
 
+
 def total_flows(traffic):
     return sum([len(traffic[src]) for src in traffic])
 
@@ -79,11 +80,16 @@ def generate_lp(graph, N, degree, traffic):
         from_start = [
             flow_var[flow_ids[flow], link_ids[(start, neighbor)]]
             for neighbor in start.neighbors]
-        constraints.append(sum(from_start) >= K)
+        to_start = [
+            flow_var[flow_ids[flow], link_ids[(neighbor, start)]]
+            for neighbor in start.neighbors]
+        constraints.append(sum(from_start) - sum(to_start) >= K)
 
         to_end = [flow_var[flow_ids[flow], link_ids[(neighbor, end)]]
                   for neighbor in end.neighbors]
-        constraints.append(sum(to_end) >= K)
+        from_end = [flow_var[flow_ids[flow], link_ids[(end, neighbor)]]
+                    for neighbor in end.neighbors]
+        constraints.append(sum(to_end) - sum(from_end) >= K)
 
         for vertex in graph.vertices():
             if vertex == start or vertex == end:
@@ -108,7 +114,7 @@ def generate_lp(graph, N, degree, traffic):
                     flow_var[flow_ids[flow], link_ids[link]] >= 0)
 
     prob = Problem(objective, constraints)
-    result = prob.solve(solver=cvxpy.CBC)
+    result = prob.solve()
     return result
 
 
