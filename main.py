@@ -1,3 +1,4 @@
+import cvxpy
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter, defaultdict
@@ -107,7 +108,7 @@ def generate_lp(graph, N, degree, traffic):
                     flow_var[flow_ids[flow], link_ids[link]] >= 0)
 
     prob = Problem(objective, constraints)
-    result = prob.solve(solver=cvx.CBC)
+    result = prob.solve(solver=cvxpy.CBC)
     return result
 
 
