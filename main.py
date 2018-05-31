@@ -148,6 +148,12 @@ def figure1a():
         #rand10perm_bound = generate_lp(random_graph, N, degree, rand10perm_traffic)
         #rand10perm.append(rand10perm_bound / upper_bound)
 
+    plt.plot(degrees, rand5perm, label="Permutation (5 Servers per switch)")
+    plt.xlabel("Network Degree")
+    plt.ylabel("Throughput (Ratio to Upper-bound)")
+    plt.legend()
+    plt.savefig("figure1a.png")
+
 
 # Figure 1b)
 def figure1b():
