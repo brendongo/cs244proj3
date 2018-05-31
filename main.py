@@ -127,11 +127,12 @@ def figure1a():
         #all2all_bound = generate_lp(random_graph, N, degree, all2all)
         #all2all.append(all2all_bound / upper_bound)
 
-        rand5perm_traffic = range(1, N + 1) * 5
-        np.random.shuffle(rand5perm_traffic)
-        rand5perm_traffic = {rand5perm_traffic[i]:
-                             [rand5perm_traffic[(i + 1) % len(rand5perm_traffic)]]
-                             for i in xrange(len(rand5perm_traffic))}
+        perm = range(1, N + 1) * 5
+        np.random.shuffle(perm)
+        rand5perm_traffic = defaultdict(list)
+        for i in xrange(len(rand5perm_traffic)):
+            rand5perm_traffic.append(
+                    rand5perm_traffic[(i + 1) % len(rand5perm_traffic)])
         upper_bound = float(N * degree) / (d_star * total_flows(rand5perm_traffic))
         rand5perm_bound = generate_lp(random_graph, N, degree, rand5perm_traffic)
         rand5perm.append(rand5perm_bound / upper_bound)
