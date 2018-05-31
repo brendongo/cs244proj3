@@ -130,9 +130,8 @@ def figure1a():
         perm = range(1, N + 1) * 5
         np.random.shuffle(perm)
         rand5perm_traffic = defaultdict(list)
-        for i in xrange(len(rand5perm_traffic)):
-            rand5perm_traffic.append(
-                    rand5perm_traffic[(i + 1) % len(rand5perm_traffic)])
+        for i in xrange(len(perm)):
+            rand5perm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
         upper_bound = float(N * degree) / (d_star * total_flows(rand5perm_traffic))
         rand5perm_bound = generate_lp(random_graph, N, degree, rand5perm_traffic)
         rand5perm.append(rand5perm_bound / upper_bound)
