@@ -82,6 +82,7 @@ class Graph(object):
         #    vertices[i].add_neighbor(vertices[i + 1])
         #    vertices[i + 1].add_neighbor(vertices[i])
         self._vertices = dict((v.uid, v) for v in vertices)
+        self._shortest_path_cache = {}
 
     def vertices(self):
         return self._vertices.values()
@@ -101,6 +102,9 @@ class Graph(object):
             list[list[Vertex]]
         """
         def bfs(start, end):
+            if (start, end) in self._shortest_path_cache:
+                return self._shortest_path_cache[(start, end)]
+
             visited = set([start])
             bfs_queue = deque([[start]])
 
@@ -108,6 +112,7 @@ class Graph(object):
                 path_prefix = bfs_queue.popleft()
                 last_vertex = path_prefix[-1]
                 if last_vertex == end:
+                    self._shortest_path_cache[(start, end)] = path_prefix
                     return path_prefix
 
                 for neighbor in last_vertex.neighbors:
@@ -117,6 +122,7 @@ class Graph(object):
                         path_copy.append(neighbor)
                         bfs_queue.append(path_copy)
 
+            self._shortest_path_cache[(start, end)] = None
             return None
 
         # Yen's shortest path algorithm, pseudocode from Wikipedia
