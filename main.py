@@ -27,6 +27,26 @@ def generate_lp(graph, N, degree, traffic):
     Returns:
         float
     """
+    def permit_link(flow, link):
+        flow = (flow[0].uid, flow[1].uid)
+        link = (link[0].uid, link[1].uid)
+        shortest_path = graph.k_shortest_paths(1, flow[0], flow[1])[0]
+        # Graph is disconnected --> you're hosed
+        if shortest_path is None:
+            return False
+
+        path_to_link_start = graph.k_shortest_paths(1, flow[0], link[0])[0]
+        path_from_link_end = graph.k_shortest_paths(1, link[1], flow[1])[0]
+        # No path through this link
+        if path_to_link_start is None or path_from_link_end is None:
+            return False
+
+        # Path through link is too long
+        # NOTE: These paths actually include the start vertex
+        if len(shortest_path) + 3 < len(path_to_link_start) + len(path_from_link_end) + 1:
+            return False
+        return True
+
     # LP (variable for each flow, link)
     # max K
     # s.t. for each flow (start, end)
@@ -79,16 +99,20 @@ def generate_lp(graph, N, degree, traffic):
         start, end = flow
         from_start = [
             flow_var[flow_ids[flow], link_ids[(start, neighbor)]]
-            for neighbor in start.neighbors]
+            for neighbor in start.neighbors if permit_link(flow, (start, neighbor))]
         to_start = [
             flow_var[flow_ids[flow], link_ids[(neighbor, start)]]
-            for neighbor in start.neighbors]
+            for neighbor in start.neighbors if permit_link(flow, (start, neighbor))]
+        if len(from_start) == 0:
+            continue
         constraints.append(sum(from_start) - sum(to_start) >= K)
 
         to_end = [flow_var[flow_ids[flow], link_ids[(neighbor, end)]]
-                  for neighbor in end.neighbors]
+                  for neighbor in end.neighbors if permit_link(flow, (neighbor, end))]
         from_end = [flow_var[flow_ids[flow], link_ids[(end, neighbor)]]
-                    for neighbor in end.neighbors]
+                    for neighbor in end.neighbors if permit_link(flow, (neighbor, end))]
+        if len(to_end) == 0:
+            continue
         constraints.append(sum(to_end) - sum(from_end) >= K)
 
         for vertex in graph.vertices():
@@ -97,15 +121,19 @@ def generate_lp(graph, N, degree, traffic):
 
             flows_out = [
                     flow_var[flow_ids[flow], link_ids[(vertex, neighbor)]]
-                    for neighbor in vertex.neighbors]
+                    for neighbor in vertex.neighbors if permit_link(flow, (vertex, neighbor))]
             flows_in = [
                     flow_var[flow_ids[flow], link_ids[(neighbor, vertex)]]
-                    for neighbor in vertex.neighbors]
+                    for neighbor in vertex.neighbors if permit_link(flow, (vertex, neighbor))]
+            if len(flows_out) == 0:
+                continue
             constraints.append(sum(flows_in) == sum(flows_out))
 
     for link in link_ids:
         link_flows = [flow_var[flow_ids[flow], link_ids[link]]
-                      for flow in flow_ids]
+                      for flow in flow_ids if permit_link(flow, link)]
+        if len(link_flows) == 0:
+            continue
         constraints.append(sum(link_flows) <= 1)
 
     for flow in flow_ids:
