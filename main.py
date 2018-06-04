@@ -220,6 +220,51 @@ def figure1b():
     plt.legend()
     plt.savefig("figure1b.png")
 
+
+# Figure 2a)
+def figure2a():
+    Ns = range(15, 140, 10)
+    degree = 10
+    all2all = []
+    rand5perm = []
+    rand10perm = []
+
+    for N in tqdm(Ns):
+        random_graph = Graph.rrg(N, degree)
+        d_star = aspl_lower_bound(degree, N)
+        #all2all_traffic = {i: range(1, N + 1) for in xrange(1, N + 1)}
+        #upper_bound = float(N * degree) / (d_star * total_flows(all2all))
+        #all2all_bound = generate_lp(random_graph, N, degree, all2all)
+        #all2all.append(all2all_bound / upper_bound)
+
+        perm = range(1, N + 1) * 5
+        np.random.shuffle(perm)
+        rand5perm_traffic = defaultdict(list)
+        for i in xrange(len(perm)):
+            rand5perm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
+        upper_bound = float(N * degree) / (d_star * total_flows(rand5perm_traffic))
+        rand5perm_bound = generate_lp(random_graph, N, degree, rand5perm_traffic)
+        rand5perm.append(rand5perm_bound / upper_bound)
+        print "Upper bound: {}".format(upper_bound)
+        print "Actual: {}".format(rand5perm_bound)
+        print "Ratio: {}".format(rand5perm_bound / upper_bound)
+
+        #rand10perm_traffic = range(1, N + 1) * 10
+        #np.random.shuffle(rand10perm_traffic)
+        #rand10perm_traffic = {rand10perm_traffic[i]:
+        #                     [rand10perm_traffic[(i + 1) % len(rand10perm_traffic)]]
+        #                     for i in xrange(len(rand10perm_traffic))}
+        #upper_bound = float(N * degree) / (d_star * total_flows(rand10perm_traffic))
+        #rand10perm_bound = generate_lp(random_graph, N, degree, rand10perm_traffic)
+        #rand10perm.append(rand10perm_bound / upper_bound)
+
+    plt.plot(degrees, rand5perm, label="Permutation (5 Servers per switch)")
+    plt.xlabel("Network Size")
+    plt.ylabel("Throughput (Ratio to Upper-bound)")
+    plt.legend()
+    plt.savefig("figure2a.png")
+
+
 # Figure 2b)
 def figure2b():
     Ns = range(15, 200, 10)
@@ -252,4 +297,5 @@ def figure2b():
 
 figure1a()
 #figure1b()
+#figure2a()
 #figure2b()
