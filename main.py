@@ -1,8 +1,7 @@
-import cvxpy
+import cvxpy as cvx
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter, defaultdict
-from cvxpy import *
 from ripl.ripl.graph import Graph
 from tqdm import tqdm
 from util import aspl_lower_bound
@@ -89,10 +88,10 @@ def generate_lp(graph, N, degree, traffic):
     num_links = N * degree
     # flow (start --> end) at link (u, v) identified as
     # flow_id(start --> end), link_id(u, v)
-    flow_var = Variable((flow_id, num_links))
-    K = Variable()  # min flow
+    flow_var = cvx.Variable((flow_id, num_links))
+    K = cvx.Variable()  # min flow
 
-    objective = Maximize(K)
+    objective = cvx.Maximize(K)
     constraints = []
 
     for flow in flow_ids:
@@ -105,7 +104,7 @@ def generate_lp(graph, N, degree, traffic):
             for neighbor in start.neighbors if permit_link(flow, (start, neighbor))]
         if len(from_start) == 0:
             continue
-        constraints.append(sum(from_start) - sum(to_start) >= K)
+        constraints.append(cvx.sum(from_start) - cvx.sum(to_start) >= K)
 
         to_end = [flow_var[flow_ids[flow], link_ids[(neighbor, end)]]
                   for neighbor in end.neighbors if permit_link(flow, (neighbor, end))]
@@ -113,7 +112,7 @@ def generate_lp(graph, N, degree, traffic):
                     for neighbor in end.neighbors if permit_link(flow, (neighbor, end))]
         if len(to_end) == 0:
             continue
-        constraints.append(sum(to_end) - sum(from_end) >= K)
+        constraints.append(cvx.sum(to_end) - cvx.sum(from_end) >= K)
 
         for vertex in graph.vertices():
             if vertex == start or vertex == end:
@@ -127,21 +126,21 @@ def generate_lp(graph, N, degree, traffic):
                     for neighbor in vertex.neighbors if permit_link(flow, (vertex, neighbor))]
             if len(flows_out) == 0:
                 continue
-            constraints.append(sum(flows_in) == sum(flows_out))
+            constraints.append(cvx.sum(flows_in) == cvx.sum(flows_out))
 
     for link in link_ids:
         link_flows = [flow_var[flow_ids[flow], link_ids[link]]
                       for flow in flow_ids if permit_link(flow, link)]
         if len(link_flows) == 0:
             continue
-        constraints.append(sum(link_flows) <= 1)
+        constraints.append(cvx.sum(link_flows) <= 1)
 
     for flow in flow_ids:
         for link in link_ids:
             constraints.append(
                     flow_var[flow_ids[flow], link_ids[link]] >= 0)
 
-    prob = Problem(objective, constraints)
+    prob = cvx.Problem(objective, constraints)
     result = prob.solve()
     return result
 
@@ -295,7 +294,37 @@ def figure2b():
     plt.legend()
     plt.savefig("figure2b.png")
 
-figure1a()
+
+def figure10():
+    def expected_cross_cluster(N, n1, n2, degree):
+        return n1 * n2 * degree / float(N - 1)
+
+    def clusters(n1, n2, Cs):
+        upper_bounds = []
+        N = n1 + n2
+        degree = 10
+        total_C = N * degree
+        d_star = aspl_lower_bound(degree, N)
+        for C in tqdm(Cs):
+            cross_cluster_capacity = C * expected_cross_cluster(N, n1, n2, degree)
+            upper_bound = min(total_C / (d_star * (n1 + n2)),
+                              cross_cluster_capacity * (n1 + n2) / (2 * n1 * n2))
+            upper_bounds.append(upper_bound)
+        return upper_bounds
+
+    Cs = np.arange(0.15, 1.8, 0.15)
+    A = clusters(10, 20, Cs)
+    B = clusters(20, 28, Cs)
+    plt.plot(Cs, A, label="Bound A")
+    plt.plot(Cs, B, label="Bound B")
+    plt.xlabel("Cross-cluster Links (Ratio to Expected Under Random Connection)")
+    plt.ylabel("Normalized Throughput")
+    plt.legend()
+    plt.savefig("figure10a.png")
+
+
+#figure1a()
 #figure1b()
 #figure2a()
 #figure2b()
+figure10()
