@@ -299,10 +299,9 @@ def figure10():
     def expected_cross_cluster(N, n1, n2, degree):
         return n1 * n2 * degree / float(N - 1)
 
-    def clusters(n1, n2, Cs):
+    def clusters(n1, n2, degree, Cs):
         upper_bounds = []
         N = n1 + n2
-        degree = 10
         total_C = N * degree
         d_star = aspl_lower_bound(degree, N)
         for C in tqdm(Cs):
@@ -312,11 +311,113 @@ def figure10():
             upper_bounds.append(upper_bound)
         return upper_bounds
 
+    def build_cluster_graph(n1, n2, degree, cross_cluster_links):
+        N = n1 + n2
+        graph = Graph.rrg(N, degree)
+        graph = Graph.rrg(N, degree)
+        actual_cross_cluster = 0
+        for i in xrange(1, n1 + 1):
+            vertex = graph.get_vertex(i)
+            for neighbor in vertex.neighbors:
+                if neighbor.uid > n1:
+                    actual_cross_cluster += 2
+
+        while abs(actual_cross_cluster - cross_cluster_links) > 2:
+            if actual_cross_cluster - cross_cluster_links < 0:
+                while True:
+                    v1 = graph.get_vertex(
+                            np.random.randint(1, n1 + 1))
+                    candidates = [n for n in v1.neighbors if n.uid <= n1]
+                    if len(candidates) > 0:
+                        v1_n = np.random.choice(candidates)
+                        v1.remove_neighbor(v1_n)
+                        v1_n.remove_neighbor(v1)
+                        break
+
+                while True:
+                    v2 = graph.get_vertex(
+                            np.random.randint(n1 + 1, N + 1))
+                    candidates = [n for n in v2.neighbors if n1 < n.uid]
+                    if len(candidates) > 0:
+                        v2_n = np.random.choice(candidates)
+                        v2.remove_neighbor(v2_n)
+                        v2_n.remove_neighbor(v2)
+                        break
+
+                v1.add_neighbor(v2)
+                v1_n.add_neighbor(v2_n)
+                v2.add_neighbor(v1)
+                v2_n.add_neighbor(v1_n)
+                actual_cross_cluster += 2
+            else:
+                while True:
+                    v1 = graph.get_vertex(
+                            np.random.randint(1, n1 + 1))
+                    candidates = [n for n in v1.neighbors if n1 < n.uid]
+                    if len(candidates) > 0:
+                        v1_n = np.random.choice(candidates)
+                        v1.remove_neighbor(v1_n)
+                        v1_n.remove_neighbor(v1)
+                        break
+
+                while True:
+                    v2 = graph.get_vertex(
+                            np.random.randint(n1 + 1, N + 1))
+                    candidates = [n for n in v2.neighbors if n.uid <= n1]
+                    if len(candidates) > 0:
+                        v2_n = np.random.choice(candidates)
+                        v2.remove_neighbor(v2_n)
+                        v2_n.remove_neighbor(v2)
+                        break
+
+                v1.add_neighbor(v2)
+                v1_n.add_neighbor(v2_n)
+                v2.add_neighbor(v1)
+                v2_n.add_neighbor(v1_n)
+                actual_cross_cluster -= 2
+        return graph
+
     Cs = np.arange(0.15, 1.8, 0.15)
-    A = clusters(10, 20, Cs)
-    B = clusters(20, 28, Cs)
-    plt.plot(Cs, A, label="Bound A")
-    plt.plot(Cs, B, label="Bound B")
+    degree = 5
+    n1 = 15
+    n2 = 10
+    bound_A = clusters(n1, n2, degree, Cs)
+    throughput_A = []
+    for C in tqdm(Cs):
+        N = n1 + n2
+        graph = build_cluster_graph(
+                n1, n2, degree,
+                C * expected_cross_cluster(N, n1, n2, degree))
+
+        perm = range(1, N + 1)
+        np.random.shuffle(perm)
+        randperm_traffic = defaultdict(list)
+        for i in xrange(len(perm)):
+            randperm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
+        throughput = generate_lp(graph, N, degree, randperm_traffic)
+        throughput_A.append(throughput)
+
+    n1 = 5
+    n2 = 10
+    bound_B = clusters(n1, n2, degree, Cs)
+    throughput_B = []
+    for C in tqdm(Cs):
+        N = n1 + n2
+        graph = build_cluster_graph(
+                n1, n2, degree,
+                C * expected_cross_cluster(N, n1, n2, degree))
+
+        perm = range(1, N + 1)
+        np.random.shuffle(perm)
+        randperm_traffic = defaultdict(list)
+        for i in xrange(len(perm)):
+            randperm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
+        throughput = generate_lp(graph, N, degree, randperm_traffic)
+        throughput_B.append(throughput)
+    plt.plot(Cs, bound_A, label="Bound A")
+    plt.plot(Cs, throughput_A, label="Throughput A")
+    plt.plot(Cs, bound_B, label="Bound A")
+    plt.plot(Cs, throughput_B, label="Throughput A")
     plt.xlabel("Cross-cluster Links (Ratio to Expected Under Random Connection)")
     plt.ylabel("Normalized Throughput")
     plt.legend()
