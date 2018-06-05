@@ -66,16 +66,12 @@ def generate_lp(graph, N, degree, traffic):
     # all flows positive
 
     # Assign flow_id
-    flow_id = 0
-    flow_ids = {}
+    flows = []
     for src in traffic:
         for dst in traffic[src]:
             if src == dst:
                 continue
-
-            flow_ids[(graph.get_vertex(src),
-                      graph.get_vertex(dst))] = flow_id
-            flow_id += 1
+            flows.append((graph.get_vertex(src),graph.get_vertex(dst)))
 
     # Assign link_id
     link_id = 0
@@ -88,27 +84,27 @@ def generate_lp(graph, N, degree, traffic):
     num_links = N * degree
     # flow (start --> end) at link (u, v) identified as
     # flow_id(start --> end), link_id(u, v)
-    flow_var = cvx.Variable((flow_id, num_links))
+    flow_var = cvx.Variable((len(flows), num_links))
     K = cvx.Variable()  # min flow
 
     objective = cvx.Maximize(K)
     constraints = []
 
-    for flow in flow_ids:
+    for flow_id, flow in enumerate(flows):
         start, end = flow
         from_start = [
-            flow_var[flow_ids[flow], link_ids[(start, neighbor)]]
+            flow_var[flow_id, link_ids[(start, neighbor)]]
             for neighbor in start.neighbors if permit_link(flow, (start, neighbor))]
         to_start = [
-            flow_var[flow_ids[flow], link_ids[(neighbor, start)]]
+            flow_var[flow_id, link_ids[(neighbor, start)]]
             for neighbor in start.neighbors if permit_link(flow, (start, neighbor))]
         if len(from_start) == 0:
             continue
         constraints.append(cvx.sum(from_start) - cvx.sum(to_start) >= K)
 
-        to_end = [flow_var[flow_ids[flow], link_ids[(neighbor, end)]]
+        to_end = [flow_var[flow_id, link_ids[(neighbor, end)]]
                   for neighbor in end.neighbors if permit_link(flow, (neighbor, end))]
-        from_end = [flow_var[flow_ids[flow], link_ids[(end, neighbor)]]
+        from_end = [flow_var[flow_id, link_ids[(end, neighbor)]]
                     for neighbor in end.neighbors if permit_link(flow, (neighbor, end))]
         if len(to_end) == 0:
             continue
@@ -119,26 +115,26 @@ def generate_lp(graph, N, degree, traffic):
                 continue
 
             flows_out = [
-                    flow_var[flow_ids[flow], link_ids[(vertex, neighbor)]]
+                    flow_var[flow_id, link_ids[(vertex, neighbor)]]
                     for neighbor in vertex.neighbors if permit_link(flow, (vertex, neighbor))]
             flows_in = [
-                    flow_var[flow_ids[flow], link_ids[(neighbor, vertex)]]
+                    flow_var[flow_id, link_ids[(neighbor, vertex)]]
                     for neighbor in vertex.neighbors if permit_link(flow, (vertex, neighbor))]
             if len(flows_out) == 0:
                 continue
             constraints.append(cvx.sum(flows_in) == cvx.sum(flows_out))
 
     for link in link_ids:
-        link_flows = [flow_var[flow_ids[flow], link_ids[link]]
-                      for flow in flow_ids if permit_link(flow, link)]
+        link_flows = [flow_var[flow_id, link_ids[link]]
+                      for flow_id, flow in enumerate(flows) if permit_link(flow, link)]
         if len(link_flows) == 0:
             continue
         constraints.append(cvx.sum(link_flows) <= 1)
 
-    for flow in flow_ids:
+    for flow_id, flow in enumerate(flows):
         for link in link_ids:
             constraints.append(
-                    flow_var[flow_ids[flow], link_ids[link]] >= 0)
+                    flow_var[flow_id, link_ids[link]] >= 0)
 
     prob = cvx.Problem(objective, constraints)
     result = prob.solve()
@@ -147,8 +143,8 @@ def generate_lp(graph, N, degree, traffic):
 
 # Figure 1a)
 def figure1a():
-    N = 40
-    degrees = range(3, 32, 2)
+    N = 30
+    degrees = range(25, 3, -2)
     all2all = []
     rand5perm = []
     rand10perm = []
@@ -156,10 +152,17 @@ def figure1a():
     for degree in tqdm(degrees):
         random_graph = Graph.rrg(N, degree)
         d_star = aspl_lower_bound(degree, N)
-        #all2all_traffic = {i: range(1, N + 1) for in xrange(1, N + 1)}
-        #upper_bound = float(N * degree) / (d_star * total_flows(all2all))
-        #all2all_bound = generate_lp(random_graph, N, degree, all2all)
-        #all2all.append(all2all_bound / upper_bound)
+
+        print "Figure 1a N: " + N + " degree: " + degree
+
+        # all2all_traffic = {i: range(1, N + 1) for i in xrange(1, N + 1)}
+        # upper_bound = float(N * degree) / (d_star * total_flows(all2all_traffic))
+        # all2all_bound = generate_lp(random_graph, N, degree, all2all_traffic)
+        # all2all.append(all2all_bound / upper_bound)
+        # print "All to All"
+        # print "Upper bound: {}".format(upper_bound)
+        # print "Actual: {}".format(all2all_bound)
+        # print "Ratio: {}".format(all2all_bound / upper_bound)
 
         perm = range(1, N + 1) * 5
         np.random.shuffle(perm)
@@ -169,6 +172,7 @@ def figure1a():
         upper_bound = float(N * degree) / (d_star * total_flows(rand5perm_traffic))
         rand5perm_bound = generate_lp(random_graph, N, degree, rand5perm_traffic)
         rand5perm.append(rand5perm_bound / upper_bound)
+        print "Rand5"
         print "Upper bound: {}".format(upper_bound)
         print "Actual: {}".format(rand5perm_bound)
         print "Ratio: {}".format(rand5perm_bound / upper_bound)
@@ -181,12 +185,18 @@ def figure1a():
         upper_bound = float(N * degree) / (d_star * total_flows(rand10perm_traffic))
         rand10perm_bound = generate_lp(random_graph, N, degree, rand10perm_traffic)
         rand10perm.append(rand10perm_bound / upper_bound)
+        print "Rand10"
         print "Upper bound: {}".format(upper_bound)
         print "Actual: {}".format(rand10perm_bound)
         print "Ratio: {}".format(rand10perm_bound / upper_bound)
 
+    print "rand5", rand5perm
+    print "rand10", rand10perm
+    print "all2all", all2all
+
     plt.plot(degrees, rand5perm, label="Permutation (5 Servers per switch)")
-    plt.plot(degrees, rand10perm, label="Permutation (5 Servers per switch)")
+    plt.plot(degrees, rand10perm, label="Permutation (10 Servers per switch)")
+    plt.plot(degrees, all2all, label="All to All")
     plt.xlabel("Network Degree")
     plt.ylabel("Throughput (Ratio to Upper-bound)")
     plt.legend()
@@ -428,8 +438,8 @@ def figure10():
     plt.savefig("figure10a.png")
 
 
-#figure1a()
+figure1a()
 #figure1b()
 #figure2a()
 #figure2b()
-figure10()
+# figure10()
