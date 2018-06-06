@@ -153,7 +153,7 @@ def figure1a():
         random_graph = Graph.rrg(N, degree)
         d_star = aspl_lower_bound(degree, N)
 
-        print "Figure 1a N: " + N + " degree: " + degree
+        print "Figure 1a N: ", N, " degree: ", degree
 
         # all2all_traffic = {i: range(1, N + 1) for i in xrange(1, N + 1)}
         # upper_bound = float(N * degree) / (d_star * total_flows(all2all_traffic))
