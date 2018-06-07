@@ -144,7 +144,7 @@ def generate_lp(graph, N, degree, traffic):
 # Figure 1a)
 def figure1a():
     N = 30
-    degrees = range(25, 3, -2)
+    degrees = range(3, 25, 2)
     all2all = []
     rand5perm = []
     rand10perm = []
@@ -164,7 +164,7 @@ def figure1a():
         # print "Actual: {}".format(all2all_bound)
         # print "Ratio: {}".format(all2all_bound / upper_bound)
 
-        perm = range(1, N + 1) * 5
+        perm = range(1, N + 1) * 3
         np.random.shuffle(perm)
         rand5perm_traffic = defaultdict(list)
         for i in xrange(len(perm)):
@@ -177,7 +177,7 @@ def figure1a():
         print "Actual: {}".format(rand5perm_bound)
         print "Ratio: {}".format(rand5perm_bound / upper_bound)
 
-        perm = range(1, N + 1) * 10
+        perm = range(1, N + 1) * 6
         np.random.shuffle(perm)
         rand10perm_traffic = defaultdict(list)
         for i in xrange(len(perm)):
@@ -190,13 +190,16 @@ def figure1a():
         print "Actual: {}".format(rand10perm_bound)
         print "Ratio: {}".format(rand10perm_bound / upper_bound)
 
+        print "3", rand5perm
+        print "6", rand10perm
+
     print "rand5", rand5perm
     print "rand10", rand10perm
-    print "all2all", all2all
+    # print "all2all", all2all
 
     plt.plot(degrees, rand5perm, label="Permutation (5 Servers per switch)")
     plt.plot(degrees, rand10perm, label="Permutation (10 Servers per switch)")
-    plt.plot(degrees, all2all, label="All to All")
+    # plt.plot(degrees, all2all, label="All to All")
     plt.xlabel("Network Degree")
     plt.ylabel("Throughput (Ratio to Upper-bound)")
     plt.legend()
@@ -205,8 +208,8 @@ def figure1a():
 
 # Figure 1b)
 def figure1b():
-    N = 40
-    degrees = range(3, 32)
+    N = 30
+    degrees = range(3, 25, 2)
     observed = []
     lower_bound = []
 
@@ -231,18 +234,20 @@ def figure1b():
     plt.xlabel("Network Degree")
     plt.ylabel("Path Length")
     plt.legend()
-    plt.savefig("figure1b.png")
+    plt.savefig("figure1b-2.png")
 
 
 # Figure 2a)
 def figure2a():
-    Ns = range(15, 140, 10)
-    degree = 10
+    Ns = range(10, 60, 5)
+    degree = 6
+
     all2all = []
-    rand5perm = []
-    rand10perm = []
+    rand6perm = []
+    rand3perm = []
 
     for N in tqdm(Ns):
+        print "Figure 2a N: ", N, " degree: ", degree
         random_graph = Graph.rrg(N, degree)
         d_star = aspl_lower_bound(degree, N)
         #all2all_traffic = {i: range(1, N + 1) for in xrange(1, N + 1)}
@@ -250,28 +255,36 @@ def figure2a():
         #all2all_bound = generate_lp(random_graph, N, degree, all2all)
         #all2all.append(all2all_bound / upper_bound)
 
-        perm = range(1, N + 1) * 5
+        perm = range(1, N + 1) * 3
         np.random.shuffle(perm)
-        rand5perm_traffic = defaultdict(list)
+        rand3perm_traffic = defaultdict(list)
         for i in xrange(len(perm)):
-            rand5perm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
-        upper_bound = float(N * degree) / (d_star * total_flows(rand5perm_traffic))
-        rand5perm_bound = generate_lp(random_graph, N, degree, rand5perm_traffic)
-        rand5perm.append(rand5perm_bound / upper_bound)
+            rand3perm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
+        upper_bound = float(N * degree) / (d_star * total_flows(rand3perm_traffic))
+        rand3perm_bound = generate_lp(random_graph, N, degree, rand3perm_traffic)
+        rand3perm.append(rand3perm_bound / upper_bound)
+        print "N", N, "degree", degree, " ", 3
         print "Upper bound: {}".format(upper_bound)
-        print "Actual: {}".format(rand5perm_bound)
-        print "Ratio: {}".format(rand5perm_bound / upper_bound)
+        print "Actual: {}".format(rand3perm_bound)
+        print "Ratio: {}".format(rand3perm_bound / upper_bound)
 
-        #rand10perm_traffic = range(1, N + 1) * 10
-        #np.random.shuffle(rand10perm_traffic)
-        #rand10perm_traffic = {rand10perm_traffic[i]:
-        #                     [rand10perm_traffic[(i + 1) % len(rand10perm_traffic)]]
-        #                     for i in xrange(len(rand10perm_traffic))}
-        #upper_bound = float(N * degree) / (d_star * total_flows(rand10perm_traffic))
-        #rand10perm_bound = generate_lp(random_graph, N, degree, rand10perm_traffic)
-        #rand10perm.append(rand10perm_bound / upper_bound)
+        perm = range(1, N + 1) * 6
+        np.random.shuffle(perm)
+        rand6perm_traffic = defaultdict(list)
+        for i in xrange(len(perm)):
+            rand6perm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
+        upper_bound = float(N * degree) / (d_star * total_flows(rand6perm_traffic))
+        rand6perm_bound = generate_lp(random_graph, N, degree, rand6perm_traffic)
+        rand6perm.append(rand6perm_bound / upper_bound)
+        print "Upper bound: {}".format(upper_bound)
+        print "Actual: {}".format(rand6perm_bound)
+        print "Ratio: {}".format(rand6perm_bound / upper_bound)
 
-    plt.plot(degrees, rand5perm, label="Permutation (5 Servers per switch)")
+        print "3", rand3perm
+        print "6", rand6perm
+
+    plt.plot(Ns, rand3perm, label="Permutation (3 Servers per switch)")
+    plt.plot(Ns, rand6perm, label="Permutation (6 Servers per switch)")
     plt.xlabel("Network Size")
     plt.ylabel("Throughput (Ratio to Upper-bound)")
     plt.legend()
@@ -280,29 +293,35 @@ def figure2a():
 
 # Figure 2b)
 def figure2b():
-    Ns = range(15, 200, 10)
-    degree = 10
+    Ns = range(15, 61, 2)
+    degree = 6
     observed = []
     lower_bound = []
 
-    for N in Ns:
-        theoretical_bound = aspl_lower_bound(degree, N)
-        random_graph = Graph.rrg(N, degree)
-
-        empirical = 0
-        for i in xrange(1, N + 1):
-            for j in xrange(i + 1, N + 1):
-                path = random_graph.k_shortest_paths(1, i, j)[0]
-                empirical += len(path) - 1
-        empirical = float(empirical) / (N * (N - 1) / 2.)
-        observed.append(empirical)
+    for i in xrange(15, 60, 1):
+        theoretical_bound = aspl_lower_bound(degree, i)
         lower_bound.append(theoretical_bound)
-        print "N: {}".format(N)
-        print "Observed ASLP: {}".format(empirical)
-        print "ASPL lower-bound: {}".format(theoretical_bound)
+
+    for N in Ns:
+        trials = 30
+        empirical = []
+        for _ in xrange(trials):
+            random_graph = Graph.rrg(N, degree)
+
+            empirical_trial = 0
+            for i in xrange(1, N + 1):
+                for j in xrange(i + 1, N + 1):
+                    path = random_graph.k_shortest_paths(1, i, j)[0]
+                    empirical_trial += len(path) - 1
+            empirical_trial = float(empirical_trial) / (N * (N - 1) / 2.)
+            empirical.append(empirical_trial)
+
+        empirical = sum(empirical) / float(len(empirical))
+        observed.append(empirical)
+
 
     plt.plot(Ns, observed, label="Observed ASPL")
-    plt.plot(Ns, lower_bound, label="ASPL lower-bound")
+    plt.plot(range(15, 60, 1), lower_bound, label="ASPL lower-bound")
     plt.xlabel("Network Size")
     plt.ylabel("Path Length")
     plt.legend()
