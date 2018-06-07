@@ -332,7 +332,7 @@ def figure10():
     def expected_cross_cluster(N, n1, n2, degree):
         return n1 * n2 * degree / float(N - 1)
 
-    def clusters(n1, n2, degree, Cs):
+    def clusters(n1, n2, degree, Cs, servers_per_switch):
         upper_bounds = []
         N = n1 + n2
         total_C = N * degree
@@ -341,7 +341,7 @@ def figure10():
             cross_cluster_capacity = C * expected_cross_cluster(N, n1, n2, degree)
             upper_bound = min(total_C / (d_star * (n1 + n2)),
                               cross_cluster_capacity * (n1 + n2) / (2 * n1 * n2))
-            upper_bounds.append(upper_bound)
+            upper_bounds.append(upper_bound / servers_per_switch)
         return upper_bounds
 
     def build_cluster_graph(n1, n2, degree, cross_cluster_links):
@@ -412,27 +412,31 @@ def figure10():
 
     Cs = np.arange(0.15, 1.8, 0.15)
     degree = 5
-    n1 = 15
-    n2 = 10
-    bound_A = clusters(n1, n2, degree, Cs)
-    throughput_A = []
-    for C in tqdm(Cs):
-        N = n1 + n2
-        graph = build_cluster_graph(
-                n1, n2, degree,
-                C * expected_cross_cluster(N, n1, n2, degree))
+    #servers_per_switch = 5
+    #n1 = 15
+    #n2 = 10
+    #bound_A = clusters(n1, n2, degree, Cs, servers_per_switch)
+    #throughput_A = []
+    #for C in tqdm(Cs):
+    #    N = n1 + n2
+    #    graph = build_cluster_graph(
+    #            n1, n2, degree,
+    #            C * expected_cross_cluster(N, n1, n2, degree))
 
-        perm = range(1, N + 1)
-        np.random.shuffle(perm)
-        randperm_traffic = defaultdict(list)
-        for i in xrange(len(perm)):
-            randperm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
-        throughput = generate_lp(graph, N, degree, randperm_traffic)
-        throughput_A.append(throughput)
+    #    perm = range(1, N + 1) * servers_per_switch
+    #    np.random.shuffle(perm)
+    #    randperm_traffic = defaultdict(list)
+    #    for i in xrange(len(perm)):
+    #        randperm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
+    #    throughput = generate_lp(graph, N, degree, randperm_traffic)
+    #    throughput_A.append(throughput)
+    #plt.plot(Cs, bound_A, label="Bound A")
+    #plt.plot(Cs, throughput_A, label="Throughput A")
 
     n1 = 5
     n2 = 10
-    bound_B = clusters(n1, n2, degree, Cs)
+    servers_per_switch = 3
+    bound_B = clusters(n1, n2, degree, Cs, servers_per_switch)
     throughput_B = []
     for C in tqdm(Cs):
         N = n1 + n2
@@ -440,15 +444,15 @@ def figure10():
                 n1, n2, degree,
                 C * expected_cross_cluster(N, n1, n2, degree))
 
-        perm = range(1, N + 1)
+        perm = range(1, N + 1) * servers_per_switch
         np.random.shuffle(perm)
         randperm_traffic = defaultdict(list)
         for i in xrange(len(perm)):
             randperm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
         throughput = generate_lp(graph, N, degree, randperm_traffic)
         throughput_B.append(throughput)
-    plt.plot(Cs, bound_A, label="Bound A")
-    plt.plot(Cs, throughput_A, label="Throughput A")
+        print throughput_B
+        print bound_B
     plt.plot(Cs, bound_B, label="Bound A")
     plt.plot(Cs, throughput_B, label="Throughput A")
     plt.xlabel("Cross-cluster Links (Ratio to Expected Under Random Connection)")
@@ -457,8 +461,8 @@ def figure10():
     plt.savefig("figure10a.png")
 
 
-figure1a()
+#figure1a()
 #figure1b()
 #figure2a()
 #figure2b()
-# figure10()
+figure10()
