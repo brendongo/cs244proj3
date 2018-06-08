@@ -137,7 +137,7 @@ def generate_lp(graph, N, degree, traffic):
                     flow_var[flow_id, link_ids[link]] >= 0)
 
     prob = cvx.Problem(objective, constraints)
-    result = prob.solve()
+    result = prob.solve(solver=cvx.GLPK)
     return result
 
 
@@ -355,7 +355,7 @@ def figure10():
                 if neighbor.uid > n1:
                     actual_cross_cluster += 2
 
-        while abs(actual_cross_cluster - cross_cluster_links) > 2:
+        while abs(actual_cross_cluster - cross_cluster_links) > 4:
             if actual_cross_cluster - cross_cluster_links < 0:
                 while True:
                     v1 = graph.get_vertex(
@@ -381,7 +381,7 @@ def figure10():
                 v1_n.add_neighbor(v2_n)
                 v2.add_neighbor(v1)
                 v2_n.add_neighbor(v1_n)
-                actual_cross_cluster += 2
+                actual_cross_cluster += 4
             else:
                 while True:
                     v1 = graph.get_vertex(
@@ -403,39 +403,52 @@ def figure10():
                         v2_n.remove_neighbor(v2)
                         break
 
-                v1.add_neighbor(v2)
-                v1_n.add_neighbor(v2_n)
-                v2.add_neighbor(v1)
-                v2_n.add_neighbor(v1_n)
-                actual_cross_cluster -= 2
+                v1.add_neighbor(v2_n)
+                v1_n.add_neighbor(v2)
+                v2.add_neighbor(v1_n)
+                v2_n.add_neighbor(v1)
+                actual_cross_cluster -= 4
+
+        actual_cross_cluster = 0
+        for i in xrange(1, n1 + 1):
+            vertex = graph.get_vertex(i)
+            for neighbor in vertex.neighbors:
+                if neighbor.uid > n1:
+                    actual_cross_cluster += 2
+        print "Want: ", cross_cluster_links, " got: ", actual_cross_cluster
+
         return graph
 
     Cs = np.arange(0.15, 1.8, 0.15)
     degree = 5
-    #servers_per_switch = 5
-    #n1 = 15
-    #n2 = 10
-    #bound_A = clusters(n1, n2, degree, Cs, servers_per_switch)
-    #throughput_A = []
-    #for C in tqdm(Cs):
-    #    N = n1 + n2
-    #    graph = build_cluster_graph(
-    #            n1, n2, degree,
-    #            C * expected_cross_cluster(N, n1, n2, degree))
 
-    #    perm = range(1, N + 1) * servers_per_switch
-    #    np.random.shuffle(perm)
-    #    randperm_traffic = defaultdict(list)
-    #    for i in xrange(len(perm)):
-    #        randperm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
-    #    throughput = generate_lp(graph, N, degree, randperm_traffic)
-    #    throughput_A.append(throughput)
-    #plt.plot(Cs, bound_A, label="Bound A")
-    #plt.plot(Cs, throughput_A, label="Throughput A")
-
-    n1 = 5
+    servers_per_switch = 5
+    n1 = 10
     n2 = 10
-    servers_per_switch = 3
+    bound_A = clusters(n1, n2, degree, Cs, servers_per_switch)
+    throughput_A = []
+    for C in tqdm(Cs):
+        N = n1 + n2
+        graph = build_cluster_graph(
+               n1, n2, degree,
+               C * expected_cross_cluster(N, n1, n2, degree))
+        graph = build_cluster_graph(
+               n1, n2, degree,
+               C * expected_cross_cluster(N, n1, n2, degree))
+
+        perm = range(1, N + 1) * servers_per_switch
+        np.random.shuffle(perm)
+        randperm_traffic = defaultdict(list)
+        for i in xrange(len(perm)):
+            randperm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
+        throughput = generate_lp(graph, N, degree, randperm_traffic)
+        throughput_A.append(throughput)
+        print throughput_A
+        print bound_A
+
+    n1 = 20
+    n2 = 20
+    servers_per_switch = 5
     bound_B = clusters(n1, n2, degree, Cs, servers_per_switch)
     throughput_B = []
     for C in tqdm(Cs):
@@ -453,8 +466,12 @@ def figure10():
         throughput_B.append(throughput)
         print throughput_B
         print bound_B
-    plt.plot(Cs, bound_B, label="Bound A")
-    plt.plot(Cs, throughput_B, label="Throughput A")
+
+
+    plt.plot(Cs, bound_A, label="Bound A")
+    plt.plot(Cs, throughput_A, label="Throughput A")
+    plt.plot(Cs, bound_B, label="Bound B")
+    plt.plot(Cs, throughput_B, label="Throughput B")
     plt.xlabel("Cross-cluster Links (Ratio to Expected Under Random Connection)")
     plt.ylabel("Normalized Throughput")
     plt.legend()

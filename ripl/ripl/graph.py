@@ -16,7 +16,7 @@ class Graph(object):
         Returns:
             Graph
         """
-        np.random.seed(1)
+        np.random.seed(213456)
         def unconnected_vertices(vertices):
             candidates = []
             for i in xrange(len(vertices)):
