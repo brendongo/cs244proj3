@@ -2,7 +2,7 @@ import cvxpy as cvx
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter, defaultdict
-from ripl.ripl.graph import Graph
+from graph import Graph
 from tqdm import tqdm
 from util import aspl_lower_bound
 
@@ -190,12 +190,6 @@ def figure1a():
         print "Actual: {}".format(rand10perm_bound)
         print "Ratio: {}".format(rand10perm_bound / upper_bound)
 
-        print "3", rand5perm
-        print "6", rand10perm
-
-    print "rand5", rand5perm
-    print "rand10", rand10perm
-    # print "all2all", all2all
 
     plt.plot(degrees, rand5perm, label="Permutation (5 Servers per switch)")
     plt.plot(degrees, rand10perm, label="Permutation (10 Servers per switch)")
@@ -234,7 +228,8 @@ def figure1b():
     plt.xlabel("Network Degree")
     plt.ylabel("Path Length")
     plt.legend()
-    plt.savefig("figure1b-2.png")
+    plt.axis([0, degrees[-1] + 1, 1, 3.25])
+    plt.savefig("figure1b.png")
 
 
 # Figure 2a)
@@ -280,9 +275,6 @@ def figure2a():
         print "Actual: {}".format(rand6perm_bound)
         print "Ratio: {}".format(rand6perm_bound / upper_bound)
 
-        print "3", rand3perm
-        print "6", rand6perm
-
     plt.plot(Ns, rand3perm, label="Permutation (3 Servers per switch)")
     plt.plot(Ns, rand6perm, label="Permutation (6 Servers per switch)")
     plt.xlabel("Network Size")
@@ -324,6 +316,7 @@ def figure2b():
     plt.plot(range(15, 60, 1), lower_bound, label="ASPL lower-bound")
     plt.xlabel("Network Size")
     plt.ylabel("Path Length")
+    plt.axis([0, Ns[-1], 1.54, 2.5])
     plt.legend()
     plt.savefig("figure2b.png")
 
@@ -346,7 +339,6 @@ def figure10():
 
     def build_cluster_graph(n1, n2, degree, cross_cluster_links):
         N = n1 + n2
-        graph = Graph.rrg(N, degree)
         graph = Graph.rrg(N, degree)
         actual_cross_cluster = 0
         for i in xrange(1, n1 + 1):
@@ -409,14 +401,6 @@ def figure10():
                 v2_n.add_neighbor(v1)
                 actual_cross_cluster -= 4
 
-        actual_cross_cluster = 0
-        for i in xrange(1, n1 + 1):
-            vertex = graph.get_vertex(i)
-            for neighbor in vertex.neighbors:
-                if neighbor.uid > n1:
-                    actual_cross_cluster += 2
-        print "Want: ", cross_cluster_links, " got: ", actual_cross_cluster
-
         return graph
 
     Cs = np.arange(0.15, 1.8, 0.15)
@@ -443,8 +427,6 @@ def figure10():
             randperm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
         throughput = generate_lp(graph, N, degree, randperm_traffic)
         throughput_A.append(throughput)
-        print throughput_A
-        print bound_A
 
     n1 = 20
     n2 = 20
@@ -464,9 +446,6 @@ def figure10():
             randperm_traffic[perm[i]].append(perm[(i + 1) % len(perm)])
         throughput = generate_lp(graph, N, degree, randperm_traffic)
         throughput_B.append(throughput)
-        print throughput_B
-        print bound_B
-
 
     plt.plot(Cs, bound_A, label="Bound A")
     plt.plot(Cs, throughput_A, label="Throughput A")
@@ -478,8 +457,12 @@ def figure10():
     plt.savefig("figure10a.png")
 
 
-#figure1a()
-#figure1b()
-#figure2a()
-#figure2b()
+figure1a()
+plt.clf()
+figure1b()
+plt.clf()
+figure2a()
+plt.clf()
+figure2b()
+plt.clf()
 figure10()
